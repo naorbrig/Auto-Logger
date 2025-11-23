@@ -1,5 +1,10 @@
 # auto-logger
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/naor64/Auto-Logger/releases)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/naor64/Auto-Logger)
+[![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-green.svg)](https://github.com/naor64/Auto-Logger)
+
 > **Automatic command logging for developers** – Capture CLI output from 100+ tools and share logs instantly with Claude Code or your team.
 
 Stop manually copying terminal output! auto-logger automatically saves your command logs and makes them easy to share for debugging and collaboration.
@@ -422,8 +427,21 @@ rm -rf ~/logs
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
-Feel free to open issues or submit pull requests!
+Contributions are welcome! Please feel free to:
+- Report bugs by [opening an issue](https://github.com/naor64/Auto-Logger/issues)
+- Suggest new features
+- Submit pull requests
+
+## Links
+
+- **GitHub Repository**: https://github.com/naor64/Auto-Logger
+- **Report Issues**: https://github.com/naor64/Auto-Logger/issues
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
+
+## Credits
+
+Created with [Claude Code](https://claude.com/claude-code)
