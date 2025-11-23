@@ -1,0 +1,24 @@
+# Logs directory
+logs/
+*.log
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.tmp
+*.backup
+
+# Node/npm (for future npm publishing)
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.npm/
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
