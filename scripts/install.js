@@ -178,7 +178,7 @@ function install() {
 
     console.log('  2. Run: log-help');
     console.log('');
-    console.log('Documentation: https://github.com/naor64/Auto-Logger');
+    console.log('Documentation: https://github.com/naorbrig/Auto-Logger');
     console.log('');
 
   } catch (err) {
@@ -186,7 +186,7 @@ function install() {
     console.error('❌ Installation failed:', err.message);
     console.error('');
     console.error('Please report this issue at:');
-    console.error('https://github.com/naor64/Auto-Logger/issues');
+    console.error('https://github.com/naorbrig/Auto-Logger/issues');
     console.error('');
     process.exit(1);
   }

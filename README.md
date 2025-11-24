@@ -1,9 +1,9 @@
 # auto-logger
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/naor64/Auto-Logger/releases)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/naor64/Auto-Logger)
-[![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-green.svg)](https://github.com/naor64/Auto-Logger)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/naorbrig/Auto-Logger/releases)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/naorbrig/Auto-Logger)
+[![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-green.svg)](https://github.com/naorbrig/Auto-Logger)
 
 > **Automatic command logging for developers** – Capture CLI output from 100+ tools AND browser DevTools (console + network) and share logs instantly with AI assistants or your team.
 
@@ -57,7 +57,7 @@ source ~/.bashrc  # or ~/.zshrc
 ### Manual Installation
 
 ```bash
-git clone https://github.com/naor64/Auto-Logger.git
+git clone https://github.com/naorbrig/Auto-Logger.git
 cd Auto-Logger
 npm install
 node scripts/install.js
@@ -552,14 +552,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contributing
 
 Contributions are welcome! Please feel free to:
-- Report bugs by [opening an issue](https://github.com/naor64/Auto-Logger/issues)
+- Report bugs by [opening an issue](https://github.com/naorbrig/Auto-Logger/issues)
 - Suggest new features
 - Submit pull requests
 
 ## Links
 
-- **GitHub Repository**: https://github.com/naor64/Auto-Logger
-- **Report Issues**: https://github.com/naor64/Auto-Logger/issues
+- **GitHub Repository**: https://github.com/naorbrig/Auto-Logger
+- **Report Issues**: https://github.com/naorbrig/Auto-Logger/issues
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 
 ## Credits

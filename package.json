@@ -49,12 +49,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/naor64/Auto-Logger.git"
+    "url": "git+https://github.com/naorbrig/Auto-Logger.git"
   },
   "bugs": {
-    "url": "https://github.com/naor64/Auto-Logger/issues"
+    "url": "https://github.com/naorbrig/Auto-Logger/issues"
   },
-  "homepage": "https://github.com/naor64/Auto-Logger#readme",
+  "homepage": "https://github.com/naorbrig/Auto-Logger#readme",
   "engines": {
     "node": ">=14.0.0"
   },

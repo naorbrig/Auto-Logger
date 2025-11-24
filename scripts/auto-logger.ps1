@@ -411,7 +411,7 @@ FORMATS:
   log-fmt timestamps        Add timestamps
 
 For full documentation:
-  https://github.com/naor64/Auto-Logger
+  https://github.com/naorbrig/Auto-Logger
 
 "@
 }

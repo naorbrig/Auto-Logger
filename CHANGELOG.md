@@ -100,4 +100,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Programming Languages: python, node, deno, go, cargo, flutter, ruby, php
 - Other Dev Tools: make, cmake, gh, nodemon, ts-node, storybook, tailwindcss, sass, protoc, curl, wget
 
-[1.0.0]: https://github.com/naor64/Auto-Logger/releases/tag/v1.0.0
+[1.0.0]: https://github.com/naorbrig/Auto-Logger/releases/tag/v1.0.0
