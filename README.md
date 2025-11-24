@@ -564,4 +564,4 @@ Contributions are welcome! Please feel free to:
 
 ## Credits
 
-Created with AI assistance
+Created with [Claude Code](https://claude.com/claude-code)
