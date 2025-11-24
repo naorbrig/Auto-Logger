@@ -9,12 +9,19 @@ logs/
 *.tmp
 *.backup
 
-# Node/npm (for future npm publishing)
+# Node/npm
 node_modules/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 .npm/
+*.tgz
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Auto-logger centralized logs (for testing)
+auto-logger-logs/
 
 # Editor directories
 .vscode/

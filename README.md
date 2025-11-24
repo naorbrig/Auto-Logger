@@ -5,12 +5,13 @@
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/naor64/Auto-Logger)
 [![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-green.svg)](https://github.com/naor64/Auto-Logger)
 
-> **Automatic command logging for developers** – Capture CLI output from 100+ tools and share logs instantly with Claude Code or your team.
+> **Automatic command logging for developers** – Capture CLI output from 100+ tools AND browser DevTools (console + network) and share logs instantly with Claude Code or your team.
 
-Stop manually copying terminal output! auto-logger automatically saves your command logs and makes them easy to share for debugging and collaboration.
+Stop manually copying terminal output and F12 logs! auto-logger automatically saves your command logs AND browser debugging sessions, making them easy to share for debugging and collaboration.
 
 ## Features
 
+### CLI Logging
 - **🎯 100+ CLI Tools Supported**: npm, docker, terraform, kubectl, vite, wrangler, prisma, and many more
 - **📋 One-Click Copy**: Copy log paths to clipboard instantly for sharing with Claude Code
 - **🎨 Smart Formatting**: Clean terminal output with compact/JSON modes, raw logs saved for analysis
@@ -18,21 +19,48 @@ Stop manually copying terminal output! auto-logger automatically saves your comm
   - **Manual**: All commands → single log file
   - **Auto**: Smart per-command log files (e.g., `docker build` → `docker-build.log`)
 - **👁️ Live Output**: See command output in terminal AND save to file simultaneously
-- **🌍 Cross-platform**: macOS, Linux, Windows (WSL/Git Bash)
+
+### Browser Logging (NEW!)
+- **🌐 Browser DevTools Capture**: Automatically capture console logs, network requests, and JavaScript errors
+- **🔍 Zero User Interaction**: Launch browser with logging enabled - no extensions or manual setup
+- **📡 Chrome DevTools Protocol**: Supports Chrome, Edge, Brave, and all Chromium-based browsers
+- **💾 HAR Export**: Export network logs in standard HAR format for analysis
+- **🎯 Perfect for Frontend Debugging**: Capture everything from F12 DevTools automatically
+
+### Organization
+- **📁 Centralized Project Logging**: Optional project-based organization (all logs grouped by project)
+- **🗂️ Smart Directory Detection**: Auto-detects `./logs` folders or uses `~/logs`
+- **📊 Project Management**: View all projects and their logs with `log-projects`
+
+### Platform Support
+- **🌍 Cross-platform**: macOS, Linux, Windows (PowerShell coming soon, WSL/Git Bash supported)
 - **⚡ Zero Config**: Works immediately with sensible defaults
-- **📂 Smart Directory Detection**: Auto-detects `./logs` folders or uses `~/logs`
 
 ## Installation
 
+### Via npm (Recommended)
+
 ```bash
-cd auto-logger
-chmod +x install.sh
-./install.sh
+npm install -g auto-logger
 ```
+
+The installer will automatically:
+- Set up shell integration (bash/zsh)
+- Create log directories
+- Configure commands globally
 
 Then restart your terminal or run:
 ```bash
 source ~/.bashrc  # or ~/.zshrc
+```
+
+### Manual Installation
+
+```bash
+git clone https://github.com/naor64/Auto-Logger.git
+cd Auto-Logger
+npm install
+node scripts/install.js
 ```
 
 ## Quick Start
@@ -70,6 +98,83 @@ flutter run          # → logs/flutter-run.log
 # Disable logging
 log-disable
 ```
+
+### Browser Logging (NEW!)
+
+Capture console logs, network requests, and errors from your web application:
+
+```bash
+# Start browser logging
+log-browser
+
+# → Chrome launches automatically
+# → Navigate to your app (e.g., localhost:3000)
+# → All console.log(), network requests, and errors are captured
+# → Press Ctrl+C to stop and save logs
+
+# Named session
+log-browser debug-auth-flow
+# → Saves to: logs/browser-debug-auth-flow.log
+
+# View logs
+log-copy browser-debug-auth-flow
+# → Copy path to share with Claude Code
+```
+
+**What gets captured:**
+- All `console.log()`, `console.warn()`, `console.error()` messages
+- Network requests and responses (with headers, body, timing)
+- JavaScript errors with stack traces
+- Performance timing
+
+**Supported Browsers** (Chromium-based only):
+- Google Chrome
+- Microsoft Edge
+- Brave Browser
+- Arc
+- Opera, Vivaldi, and any Chromium-based browser
+
+*Note: Firefox and Safari use different protocols and are not supported.*
+
+### Centralized Project Logging (NEW!)
+
+Organize logs by project instead of scattered across directories:
+
+```bash
+# Enable centralized mode (one-time setup)
+log-centralize enable
+
+# Work on frontend project
+cd ~/projects/my-app
+log-enable frontend
+npm run dev
+# → Saves to: ~/auto-logger-logs/my-app/frontend.log
+
+# Switch to backend project
+cd ~/projects/api-server
+log-enable backend
+python app.py
+# → Saves to: ~/auto-logger-logs/api-server/backend.log
+
+# View all projects
+log-projects
+# Projects in ~/auto-logger-logs:
+#   my-app         (3 logs, 8.2 MB, last: 5m ago)
+#   api-server     (1 log, 2.1 MB, last: 10m ago)
+
+# View logs for specific project
+log-projects my-app
+# Logs for my-app:
+#   frontend.log              (2.3 MB, 5m ago)
+#   npm-dev.log               (1.1 MB, 10m ago)
+#   browser-session.log       (4.8 MB, 15m ago)
+```
+
+**Benefits:**
+- All logs for a project in one place
+- Project name auto-detected from directory
+- Easy to find and share project-specific logs
+- Keep personal and work projects separate
 
 ## Supported Commands (100+ Tools!)
 
@@ -169,10 +274,25 @@ auto-logger automatically detects and logs **100+ popular CLI tools**. Here are 
 ### Core Commands
 
 - `log-help` - Show complete help with examples
-- `log-enable <name|auto>` - Enable logging
+- `log-enable <name|auto>` - Enable logging (CLI commands)
 - `log-disable` - Disable logging
 - `log-status` - Show current logging status
 - `log-fmt <format>` - Set output display format
+
+### Browser Logging Commands (NEW!)
+
+- `log-browser [name]` - Launch browser with logging enabled
+- `log-browser --preview` - Show logs in terminal while capturing
+- `log-browser --silent` - No terminal output, only save to file
+
+### Centralized Mode Commands (NEW!)
+
+- `log-centralize enable` - Enable centralized project-based logging
+- `log-centralize disable` - Disable centralized mode (use default)
+- `log-centralize status` - Show current mode and directory
+- `log-projects` - List all projects with logs
+- `log-projects <name>` - List logs for specific project
+- `log-projects <name> --clean` - Delete all logs for project
 
 ### Formatting Options
 

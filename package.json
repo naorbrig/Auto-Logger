@@ -1,0 +1,78 @@
+{
+  "name": "auto-logger",
+  "version": "1.0.0",
+  "description": "Automatic command logging for developers – Capture CLI output from 100+ tools and browser DevTools (console + network) and share logs instantly with Claude Code or your team",
+  "main": "bin/auto-logger.js",
+  "bin": {
+    "log-enable": "./bin/auto-logger.js",
+    "log-disable": "./bin/auto-logger.js",
+    "log-status": "./bin/auto-logger.js",
+    "log-fmt": "./bin/auto-logger.js",
+    "log-list": "./bin/auto-logger.js",
+    "log-view": "./bin/auto-logger.js",
+    "log-clear": "./bin/auto-logger.js",
+    "log-copy": "./bin/auto-logger.js",
+    "log-help": "./bin/auto-logger.js",
+    "log-centralize": "./bin/auto-logger.js",
+    "log-projects": "./bin/auto-logger.js",
+    "log-run": "./bin/auto-logger.js",
+    "log-browser": "./bin/auto-logger.js",
+    "log-export-har": "./bin/auto-logger.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js",
+    "preuninstall": "node scripts/uninstall.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cli",
+    "logging",
+    "logger",
+    "devtools",
+    "console",
+    "network",
+    "har",
+    "browser",
+    "chrome",
+    "debugging",
+    "terminal",
+    "automation",
+    "npm",
+    "docker",
+    "kubectl",
+    "wrangler",
+    "developer-tools",
+    "cdp",
+    "chrome-devtools-protocol"
+  ],
+  "author": "Naor Brig",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/naor64/Auto-Logger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/naor64/Auto-Logger/issues"
+  },
+  "homepage": "https://github.com/naor64/Auto-Logger#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "dependencies": {
+    "puppeteer-core": "^23.0.0"
+  },
+  "devDependencies": {},
+  "files": [
+    "bin/",
+    "scripts/",
+    "lib/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ]
+}

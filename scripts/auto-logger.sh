@@ -3,25 +3,42 @@
 # Version: 1.0.0
 
 # Configuration
-# Smart directory detection: use ./logs if exists, otherwise ~/logs
-if [[ -z "$AUTO_LOGGER_DIR" ]]; then
-    if [[ -d "./logs" ]]; then
-        export AUTO_LOGGER_DIR="./logs"
-    else
-        export AUTO_LOGGER_DIR="$HOME/logs"
-    fi
-fi
-
 export AUTO_LOGGER_ENABLED=0
 export AUTO_LOGGER_MODE=""
 export AUTO_LOGGER_NAME=""
 export AUTO_LOGGER_FORMAT="${AUTO_LOGGER_FORMAT:-default}"
 
+# Get log directory using smart resolution
+# Priority: 1) Centralized mode, 2) AUTO_LOGGER_DIR, 3) ./logs, 4) ~/logs
+_auto_logger_get_dir() {
+    # Try to use Node.js helper if available
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    local helper="$script_dir/bin/get-log-dir.js"
+
+    if [[ -x "$helper" ]] && command -v node &> /dev/null; then
+        node "$helper" 2>/dev/null || echo "$HOME/logs"
+    elif [[ -n "$AUTO_LOGGER_DIR" ]]; then
+        echo "$AUTO_LOGGER_DIR"
+    elif [[ -d "./logs" ]]; then
+        echo "./logs"
+    else
+        echo "$HOME/logs"
+    fi
+}
+
 # Ensure logs directory exists
 _auto_logger_init() {
-    if [[ ! -d "$AUTO_LOGGER_DIR" ]]; then
-        mkdir -p "$AUTO_LOGGER_DIR"
+    local logdir=$(_auto_logger_get_dir)
+    if [[ ! -d "$logdir" ]]; then
+        mkdir -p "$logdir"
     fi
+
+    # Convert to absolute path if relative
+    if [[ ! "$logdir" = /* ]]; then
+        logdir="$(cd "$logdir" 2>/dev/null && pwd)" || logdir="$HOME/logs"
+    fi
+
+    export AUTO_LOGGER_DIR="$logdir"
 }
 
 # Generate log filename based on command
@@ -252,6 +269,12 @@ log-enable() {
         export AUTO_LOGGER_NAME="$mode"
         _auto_logger_setup_aliases
         echo "📝 Logging enabled → $AUTO_LOGGER_DIR/${mode}.log"
+    fi
+
+    # Warn if in silent mode
+    if [[ "$AUTO_LOGGER_FORMAT" == "silent" ]]; then
+        echo "⚠️  Format is set to 'silent' - command output will NOT appear on screen"
+        echo "   Run 'log-fmt default' to see output while logging"
     fi
 }
 
@@ -612,9 +635,11 @@ log-view() {
         return 1
     fi
 
-    local logfile="$AUTO_LOGGER_DIR/$1.log"
+    # Strip .log extension if present, then add it
+    local logname="${1%.log}"
+    local logfile="$AUTO_LOGGER_DIR/${logname}.log"
     if [[ -f "$logfile" ]]; then
-        less "$logfile"
+        cat "$logfile"
     else
         echo "Log file not found: $logfile"
         return 1
@@ -631,10 +656,12 @@ log-clear() {
             echo "✓ All logs cleared"
         fi
     else
-        local logfile="$AUTO_LOGGER_DIR/$1.log"
+        # Strip .log extension if present, then add it
+        local logname="${1%.log}"
+        local logfile="$AUTO_LOGGER_DIR/${logname}.log"
         if [[ -f "$logfile" ]]; then
             rm "$logfile"
-            echo "✓ Cleared $1.log"
+            echo "✓ Cleared ${logname}.log"
         else
             echo "Log file not found: $logfile"
             return 1
@@ -647,30 +674,51 @@ log-copy() {
     local logfile=""
 
     if [[ $# -eq 0 ]]; then
-        # No argument - use current logging mode
-        if [[ $AUTO_LOGGER_ENABLED -eq 0 ]]; then
-            echo "⚠️  Logging is disabled. Specify a log name or enable logging first."
-            echo "Usage: log-copy [logname]"
-            return 1
-        fi
-
-        if [[ "$AUTO_LOGGER_MODE" == "auto" ]]; then
-            echo "⚠️  Auto mode is active. Specify which log file:"
-            log-list
-            echo ""
-            echo "Usage: log-copy <logname>"
-            return 1
+        # No argument - try to find most recent log
+        if [[ $AUTO_LOGGER_ENABLED -eq 1 ]]; then
+            # Logging is active - use current log
+            if [[ "$AUTO_LOGGER_MODE" == "auto" ]]; then
+                echo "⚠️  Auto mode is active. Specify which log file:"
+                log-list
+                echo ""
+                echo "Usage: log-copy <logname>"
+                return 1
+            else
+                logfile="$AUTO_LOGGER_DIR/${AUTO_LOGGER_NAME}.log"
+            fi
         else
-            logfile="$AUTO_LOGGER_DIR/${AUTO_LOGGER_NAME}.log"
+            # Logging is disabled - find most recent browser session or log
+            # Try browser sessions first (directories starting with browser-)
+            local recent_browser=$(ls -td "$AUTO_LOGGER_DIR"/browser-* 2>/dev/null | head -1)
+            if [[ -n "$recent_browser" && -d "$recent_browser" ]]; then
+                logfile="$recent_browser"
+            else
+                # Fall back to most recent .log file
+                local recent_log=$(ls -t "$AUTO_LOGGER_DIR"/*.log 2>/dev/null | head -1)
+                if [[ -n "$recent_log" ]]; then
+                    logfile="$recent_log"
+                else
+                    echo "⚠️  No logs found in $AUTO_LOGGER_DIR"
+                    echo "Usage: log-copy [logname]"
+                    return 1
+                fi
+            fi
         fi
     else
         # Specific log name provided
-        logfile="$AUTO_LOGGER_DIR/$1.log"
+        # Check if it's a directory (browser session) or a file
+        if [[ -d "$AUTO_LOGGER_DIR/$1" ]]; then
+            logfile="$AUTO_LOGGER_DIR/$1"
+        else
+            # Strip .log extension if present, then add it
+            local logname="${1%.log}"
+            logfile="$AUTO_LOGGER_DIR/${logname}.log"
+        fi
     fi
 
-    # Check if file exists
-    if [[ ! -f "$logfile" ]]; then
-        echo "⚠️  Log file not found: $logfile"
+    # Check if file or directory exists
+    if [[ ! -e "$logfile" ]]; then
+        echo "⚠️  Log not found: $logfile"
         echo "Available logs:"
         log-list
         return 1
@@ -705,79 +753,139 @@ log-copy() {
         absolute_path="$logfile"
     else
         # Convert relative to absolute
-        absolute_path="$(cd "$(dirname "$logfile")" 2>/dev/null && pwd)/$(basename "$logfile")"
+        if [[ -d "$logfile" ]]; then
+            # It's a directory
+            absolute_path="$(cd "$logfile" 2>/dev/null && pwd)"
+        else
+            # It's a file
+            absolute_path="$(cd "$(dirname "$logfile")" 2>/dev/null && pwd)/$(basename "$logfile")"
+        fi
     fi
 
-    # Copy to clipboard
-    echo -n "$absolute_path" | eval $clip_cmd
-
-    echo "📋 Copied to clipboard: $absolute_path"
+    # Copy to clipboard (add trailing slash for directories)
+    if [[ -d "$absolute_path" ]]; then
+        echo -n "${absolute_path}/" | eval $clip_cmd
+        echo "📋 Copied to clipboard: ${absolute_path}/"
+    else
+        echo -n "$absolute_path" | eval $clip_cmd
+        echo "📋 Copied to clipboard: $absolute_path"
+    fi
 }
 
 # Show help
 log-help() {
     cat << 'EOF'
-auto-logger - Automatic command logging
+auto-logger - Automatic CLI & Browser Logging
 
 CORE COMMANDS:
-  log-enable <name|auto>  Enable logging
-                          - log-enable frontend    (all commands → frontend.log)
-                          - log-enable auto        (auto-detect filenames)
+  log-enable <name|auto>          Enable CLI logging
+                                  - log-enable frontend       (all commands → frontend.log)
+                                  - log-enable auto           (auto-detect files)
 
-  log-disable             Disable logging
+  log-disable                     Disable logging
 
-  log-status              Show current logging status
+  log-status                      Show current logging status
 
-  log-fmt <format>        Set output display format
-                          - default    Raw output (no formatting)
-                          - compact    One-line summaries
-                          - json       Pretty-print JSON
-                          - silent     No terminal output, only file
-                          - timestamps Add timestamps to each line
+  log-fmt <format>                Set output display format
+                                  - default, compact, json, silent, timestamps
+
+BROWSER LOGGING (NEW!):
+  log-browser [name]              Launch Chrome with DevTools Protocol logging
+                                  - Captures console.log(), network requests, errors
+                                  - Zero setup required - no extensions!
+                                  - Press Ctrl+C to stop and save
+
+  Example:
+    log-browser my-app
+    # Chrome opens → navigate to localhost:3000
+    # All console & network activity captured
+    # Press Ctrl+C to save logs
+
+CENTRALIZED MODE (NEW!):
+  log-centralize enable           Enable project-based logging
+  log-centralize disable          Disable centralized mode
+  log-centralize status           Show current mode
+
+  log-projects                    List all projects with logs
+  log-projects <name>             List logs for specific project
+  log-projects <name> --clean     Delete all logs for project
 
 UTILITY COMMANDS:
   log-list                List recent log files
-  log-view <name>         View a log file (e.g., log-view frontend)
+  log-view <name>         View a log file
   log-copy [name]         Copy log path to clipboard
   log-clear [name]        Clear specific log or all logs
   log-help                Show this help
 
-QUICK START:
+QUICK START (CLI):
   log-enable frontend     # Start logging to frontend.log
   npm run dev             # Your commands are logged
   log-copy                # Copy path for Claude Code
   log-disable             # Stop logging
 
+QUICK START (Browser):
+  log-browser             # Launches Chrome with logging
+  # Navigate to your app, debug normally
+  # Press Ctrl+C to stop
+  log-copy                # Share with Claude Code
+
 EXAMPLES:
-  # Manual mode (single file)
+  # CLI logging - Manual mode
   log-enable frontend
   npm run dev
   wrangler tail
   # Everything → logs/frontend.log
 
-  # Auto mode (separate files per command)
+  # CLI logging - Auto mode
   log-enable auto
   npm run dev       # → logs/npm-dev.log
   wrangler tail     # → logs/wrangler-tail.log
 
-  # Clean output with formatting
-  log-fmt compact
-  wrangler tail     # Terminal: clean summaries, File: full JSON
+  # Browser logging
+  log-browser debug-auth
+  # Chrome opens, navigate to localhost:3000
+  # Test your auth flow
+  # Ctrl+C when done → logs/browser-debug-auth.log
+
+  # Centralized project organization
+  log-centralize enable
+  cd ~/projects/my-app
+  log-enable frontend
+  # Saves to: ~/auto-logger-logs/my-app/frontend.log
+  log-projects my-app  # View all logs for this project
 
 CONFIGURATION:
   Logs directory: Smart auto-detection
+    - If centralized mode: ~/auto-logger-logs/{project-name}/
     - If ./logs exists → use it (per-project)
     - Otherwise → use ~/logs (global)
 
   Override: export AUTO_LOGGER_DIR="/custom/path"
 
 For full documentation, see:
-  https://github.com/your-repo/auto-logger
-  or: cat ~/.auto-logger/README.md (if you have local copy)
+  https://github.com/naor64/Auto-Logger
 EOF
 }
 
+# Centralized logging mode control
+log-centralize() {
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    local cli_tool="$script_dir/bin/auto-logger.js"
+
+    if [[ -x "$cli_tool" ]] && command -v node &> /dev/null; then
+        node "$cli_tool" centralize "$@"
+    else
+        echo "Error: Node.js CLI tool not found or Node.js not installed"
+        echo "Please ensure auto-logger is properly installed via npm"
+        return 1
+    fi
+}
+
+# Initialize logger on load
+_auto_logger_init
+
 echo "✓ auto-logger loaded"
 echo "  Commands: log-enable, log-disable, log-status, log-fmt, log-list, log-view, log-clear, log-copy, log-help"
+echo "           log-centralize, log-projects"
 echo "  Logs directory: $AUTO_LOGGER_DIR"
 echo "  Type 'log-help' for usage info"
