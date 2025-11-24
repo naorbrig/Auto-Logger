@@ -5,7 +5,7 @@
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/naor64/Auto-Logger)
 [![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-green.svg)](https://github.com/naor64/Auto-Logger)
 
-> **Automatic command logging for developers** – Capture CLI output from 100+ tools AND browser DevTools (console + network) and share logs instantly with Claude Code or your team.
+> **Automatic command logging for developers** – Capture CLI output from 100+ tools AND browser DevTools (console + network) and share logs instantly with AI assistants or your team.
 
 Stop manually copying terminal output and F12 logs! auto-logger automatically saves your command logs AND browser debugging sessions, making them easy to share for debugging and collaboration.
 
@@ -13,7 +13,7 @@ Stop manually copying terminal output and F12 logs! auto-logger automatically sa
 
 ### CLI Logging
 - **🎯 100+ CLI Tools Supported**: npm, docker, terraform, kubectl, vite, wrangler, prisma, and many more
-- **📋 One-Click Copy**: Copy log paths to clipboard instantly for sharing with Claude Code
+- **📋 One-Click Copy**: Copy log paths to clipboard instantly for sharing and analysis
 - **🎨 Smart Formatting**: Clean terminal output with compact/JSON modes, raw logs saved for analysis
 - **🔄 Two Modes**:
   - **Manual**: All commands → single log file
@@ -118,7 +118,7 @@ log-browser debug-auth-flow
 
 # View logs
 log-copy browser-debug-auth-flow
-# → Copy path to share with Claude Code
+# → Copy path to clipboard
 ```
 
 **What gets captured:**
@@ -384,7 +384,7 @@ wrangler tail
 
 # But the log file has FULL JSON details!
 log-copy wrangler-tail
-# Share the complete logs with Claude Code
+# Share the complete logs with your team or AI assistants
 ```
 
 ```bash
@@ -406,7 +406,7 @@ curl https://api.example.com/data
 # Log file has raw JSON for processing
 ```
 
-### Share Logs with Claude Code
+### Share Logs with AI Assistants
 
 ```bash
 # Enable logging
@@ -420,7 +420,7 @@ npm run dev
 log-copy
 # 📋 Copied to clipboard: /Users/you/project/app/logs/frontend.log
 
-# Now paste in Claude Code chat to analyze the logs!
+# Now paste the path in your AI assistant to analyze the logs!
 ```
 
 Or with auto mode:
@@ -564,4 +564,4 @@ Contributions are welcome! Please feel free to:
 
 ## Credits
 
-Created with [Claude Code](https://claude.com/claude-code)
+Created with AI assistance

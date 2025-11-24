@@ -820,7 +820,7 @@ UTILITY COMMANDS:
 QUICK START (CLI):
   log-enable frontend     # Start logging to frontend.log
   npm run dev             # Your commands are logged
-  log-copy                # Copy path for Claude Code
+  log-copy                # Copy log path to clipboard
   log-disable             # Stop logging
 
 QUICK START (Browser):
