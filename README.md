@@ -41,7 +41,7 @@ Stop manually copying terminal output and F12 logs! auto-logger automatically sa
 ### Via npm (Recommended)
 
 ```bash
-npm install -g auto-logger
+npm install -g @naorbrig/auto-logger
 ```
 
 The installer will automatically:

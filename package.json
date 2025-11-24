@@ -1,5 +1,5 @@
 {
-  "name": "auto-logger",
+  "name": "@naorbrig/auto-logger",
   "version": "1.0.0",
   "description": "Automatic command logging for developers – Capture CLI output from 100+ tools and browser DevTools (console + network) and share logs instantly with Claude Code or your team",
   "main": "bin/auto-logger.js",
