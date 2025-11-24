@@ -635,9 +635,17 @@ log-view() {
         return 1
     fi
 
-    # Strip .log extension if present, then add it
-    local logname="${1%.log}"
-    local logfile="$AUTO_LOGGER_DIR/${logname}.log"
+    local logfile
+    # Check if absolute path provided
+    if [[ "$1" = /* ]]; then
+        # Use absolute path directly
+        logfile="$1"
+    else
+        # Strip .log extension if present, then add it
+        local logname="${1%.log}"
+        logfile="$AUTO_LOGGER_DIR/${logname}.log"
+    fi
+
     if [[ -f "$logfile" ]]; then
         cat "$logfile"
     else
@@ -656,12 +664,20 @@ log-clear() {
             echo "✓ All logs cleared"
         fi
     else
-        # Strip .log extension if present, then add it
-        local logname="${1%.log}"
-        local logfile="$AUTO_LOGGER_DIR/${logname}.log"
+        local logfile
+        # Check if absolute path provided
+        if [[ "$1" = /* ]]; then
+            # Use absolute path directly
+            logfile="$1"
+        else
+            # Strip .log extension if present, then add it
+            local logname="${1%.log}"
+            logfile="$AUTO_LOGGER_DIR/${logname}.log"
+        fi
+
         if [[ -f "$logfile" ]]; then
             rm "$logfile"
-            echo "✓ Cleared ${logname}.log"
+            echo "✓ Cleared $(basename "$logfile")"
         else
             echo "Log file not found: $logfile"
             return 1
@@ -706,8 +722,12 @@ log-copy() {
         fi
     else
         # Specific log name provided
-        # Check if it's a directory (browser session) or a file
-        if [[ -d "$AUTO_LOGGER_DIR/$1" ]]; then
+        # Check if absolute path provided
+        if [[ "$1" = /* ]]; then
+            # Use absolute path directly
+            logfile="$1"
+        elif [[ -d "$AUTO_LOGGER_DIR/$1" ]]; then
+            # Check if it's a directory (browser session)
             logfile="$AUTO_LOGGER_DIR/$1"
         else
             # Strip .log extension if present, then add it

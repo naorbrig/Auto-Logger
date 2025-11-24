@@ -275,7 +275,15 @@ function log-view {
 
     Initialize-AutoLogger
     $logDir = $env:AUTO_LOGGER_DIR
-    $logFile = Join-Path $logDir "$Name.log"
+
+    # Check if absolute path provided (Windows: C:\path or Unix: /path)
+    if ([System.IO.Path]::IsPathRooted($Name)) {
+        $logFile = $Name
+    } else {
+        # Strip .log extension if present
+        $logName = $Name -replace '\.log$', ''
+        $logFile = Join-Path $logDir "$logName.log"
+    }
 
     if (-not (Test-Path $logFile)) {
         # Try to find partial match
@@ -299,10 +307,18 @@ function log-clear {
     $logDir = $env:AUTO_LOGGER_DIR
 
     if ($Name) {
-        $logFile = Join-Path $logDir "$Name.log"
+        # Check if absolute path provided
+        if ([System.IO.Path]::IsPathRooted($Name)) {
+            $logFile = $Name
+        } else {
+            # Strip .log extension if present
+            $logName = $Name -replace '\.log$', ''
+            $logFile = Join-Path $logDir "$logName.log"
+        }
+
         if (Test-Path $logFile) {
             Remove-Item $logFile -Force
-            Write-Host "✓ Cleared log: $Name"
+            Write-Host "✓ Cleared log: $(Split-Path -Leaf $logFile)"
         } else {
             Write-Host "Log file not found: $logFile"
         }
@@ -332,7 +348,14 @@ function log-copy {
     $logDir = $env:AUTO_LOGGER_DIR
 
     if ($Name) {
-        $logFile = Join-Path $logDir "$Name.log"
+        # Check if absolute path provided
+        if ([System.IO.Path]::IsPathRooted($Name)) {
+            $logFile = $Name
+        } else {
+            # Strip .log extension if present
+            $logName = $Name -replace '\.log$', ''
+            $logFile = Join-Path $logDir "$logName.log"
+        }
     } else {
         # Get most recent log
         $logs = Get-ChildItem -Path $logDir -Filter *.log -File | Sort-Object LastWriteTime -Descending
