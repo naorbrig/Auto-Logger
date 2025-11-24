@@ -33,8 +33,10 @@ Stop manually copying terminal output and F12 logs! auto-logger automatically sa
 - **📊 Project Management**: View all projects and their logs with `log-projects`
 
 ### Platform Support
-- **🌍 Cross-platform**: macOS, Linux, Windows (PowerShell coming soon, WSL/Git Bash supported)
+- **🌍 Cross-platform**: macOS, Linux, Windows (⚠️ beta - WSL/Git Bash recommended)
 - **⚡ Zero Config**: Works immediately with sensible defaults
+
+> **Note:** Windows support is currently in beta and has not been fully tested. For Windows users, we recommend using WSL (Windows Subsystem for Linux) or Git Bash for the best experience.
 
 ## Installation
 
