@@ -1,6 +1,6 @@
 {
   "name": "@naorbrig/auto-logger",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Automatic command logging for developers – Capture CLI output from 100+ tools and browser DevTools (console + network) and share logs instantly with Claude Code or your team",
   "main": "bin/auto-logger.js",
   "bin": {
@@ -8,6 +8,8 @@
     "log-disable": "./bin/auto-logger.js",
     "log-status": "./bin/auto-logger.js",
     "log-fmt": "./bin/auto-logger.js",
+    "log-append": "./bin/auto-logger.js",
+    "log-filter": "./bin/auto-logger.js",
     "log-list": "./bin/auto-logger.js",
     "log-view": "./bin/auto-logger.js",
     "log-clear": "./bin/auto-logger.js",

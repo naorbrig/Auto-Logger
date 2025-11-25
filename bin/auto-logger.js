@@ -159,6 +159,8 @@ function route() {
     'log-disable': 'log-disable',
     'log-status': 'log-status',
     'log-fmt': 'log-fmt',
+    'log-append': 'log-append',
+    'log-filter': 'log-filter',
     'log-list': 'log-list',
     'log-view': 'log-view',
     'log-clear': 'log-clear',

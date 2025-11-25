@@ -1,19 +1,32 @@
 #!/bin/bash
 # auto-logger.sh - Automatic command logging with manual toggle and auto-detection
-# Version: 1.0.0
+# Version: 1.1.0
 
 # Configuration
 export AUTO_LOGGER_ENABLED=0
 export AUTO_LOGGER_MODE=""
 export AUTO_LOGGER_NAME=""
 export AUTO_LOGGER_FORMAT="${AUTO_LOGGER_FORMAT:-default}"
+export AUTO_LOGGER_APPEND=0  # 0 = overwrite each command (default), 1 = append
+export AUTO_LOGGER_FILTER_ENABLED=0  # 0 = no filtering (default), 1 = filtering enabled
+export AUTO_LOGGER_FILTER_MODE="terminal"  # terminal = filter terminal only, both = filter terminal and file
+
+# Store script directory for reliable path resolution
+# Handle both sourced and executed contexts
+# IMPORTANT: Don't follow symlinks - we want the actual npm install location
+if [[ -n "${BASH_SOURCE[0]}" ]]; then
+    # Script is being sourced or executed
+    export AUTO_LOGGER_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+else
+    # Fallback if BASH_SOURCE is not set
+    export AUTO_LOGGER_SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+fi
 
 # Get log directory using smart resolution
 # Priority: 1) Centralized mode, 2) AUTO_LOGGER_DIR, 3) ./logs, 4) ~/logs
 _auto_logger_get_dir() {
     # Try to use Node.js helper if available
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-    local helper="$script_dir/bin/get-log-dir.js"
+    local helper="$AUTO_LOGGER_SCRIPT_DIR/bin/get-log-dir.js"
 
     if [[ -x "$helper" ]] && command -v node &> /dev/null; then
         node "$helper" 2>/dev/null || echo "$HOME/logs"
@@ -300,9 +313,208 @@ log-status() {
             echo "   File: $AUTO_LOGGER_DIR/${AUTO_LOGGER_NAME}.log"
         fi
         echo "   Format: $AUTO_LOGGER_FORMAT"
+        if [[ "$AUTO_LOGGER_APPEND" == "1" ]]; then
+            echo "   Append: enabled (commands append to log)"
+        else
+            echo "   Append: disabled (commands overwrite log)"
+        fi
+        if [[ "$AUTO_LOGGER_FILTER_ENABLED" == "1" ]]; then
+            echo "   Filter: enabled (mode: $AUTO_LOGGER_FILTER_MODE)"
+        else
+            echo "   Filter: disabled"
+        fi
     else
         echo "✗ Logging is DISABLED"
     fi
+}
+
+# Control append mode
+log-append() {
+    local action="${1:-status}"
+
+    case "$action" in
+        enable)
+            export AUTO_LOGGER_APPEND=1
+            echo "✓ Append mode enabled"
+            echo "  Commands will append to log files"
+            ;;
+        disable)
+            export AUTO_LOGGER_APPEND=0
+            echo "✓ Append mode disabled"
+            echo "  Commands will overwrite log files (default)"
+            ;;
+        status)
+            if [[ "$AUTO_LOGGER_APPEND" == "1" ]]; then
+                echo "Append mode: enabled"
+                echo "  Each command appends to the log file"
+            else
+                echo "Append mode: disabled (default)"
+                echo "  Each command overwrites the log file"
+            fi
+            ;;
+        *)
+            echo "Usage: log-append [enable|disable|status]"
+            echo ""
+            echo "Control whether commands append or overwrite log files:"
+            echo "  enable   - Commands append to log file"
+            echo "  disable  - Commands overwrite log file (default)"
+            echo "  status   - Show current append mode"
+            return 1
+            ;;
+    esac
+}
+
+# Control log filtering
+log-filter() {
+    local action="${1:-status}"
+
+    case "$action" in
+        enable)
+            export AUTO_LOGGER_FILTER_ENABLED=1
+            echo "✓ Log filtering enabled"
+            echo "  Mode: $AUTO_LOGGER_FILTER_MODE"
+            echo "  Noisy logs will be filtered based on tool detection"
+            echo ""
+            echo "Supported tools: flutter, npm, docker, vite, wrangler, pytest, gradle"
+            ;;
+        disable)
+            export AUTO_LOGGER_FILTER_ENABLED=0
+            echo "✓ Log filtering disabled"
+            echo "  All output will be shown"
+            ;;
+        status)
+            if [[ "$AUTO_LOGGER_FILTER_ENABLED" == "1" ]]; then
+                echo "Log filtering: enabled"
+                echo "  Mode: $AUTO_LOGGER_FILTER_MODE"
+                if [[ "$AUTO_LOGGER_FILTER_MODE" == "terminal" ]]; then
+                    echo "    - Terminal output: filtered"
+                    echo "    - Log file: raw (unfiltered)"
+                else
+                    echo "    - Terminal output: filtered"
+                    echo "    - Log file: filtered"
+                fi
+            else
+                echo "Log filtering: disabled"
+                echo "  All output is shown (no filtering)"
+            fi
+            ;;
+        mode)
+            local mode="$2"
+            if [[ -z "$mode" ]]; then
+                echo "Current mode: $AUTO_LOGGER_FILTER_MODE"
+                echo ""
+                echo "Usage: log-filter mode <terminal|both>"
+                echo "  terminal - Filter terminal only, keep raw in file (default)"
+                echo "  both     - Filter both terminal and file"
+                return 1
+            fi
+            case "$mode" in
+                terminal)
+                    export AUTO_LOGGER_FILTER_MODE="terminal"
+                    echo "✓ Filter mode set to: terminal"
+                    echo "  Terminal output will be filtered"
+                    echo "  Log files will contain raw output"
+                    ;;
+                both)
+                    export AUTO_LOGGER_FILTER_MODE="both"
+                    echo "✓ Filter mode set to: both"
+                    echo "  Both terminal and log files will be filtered"
+                    ;;
+                *)
+                    echo "⚠️  Invalid mode: $mode"
+                    echo "Valid modes: terminal, both"
+                    return 1
+                    ;;
+            esac
+            ;;
+        list)
+            local filters_file="$AUTO_LOGGER_SCRIPT_DIR/lib/log-filters.json"
+
+            if [[ ! -f "$filters_file" ]]; then
+                echo "⚠️  Filters file not found: $filters_file"
+                return 1
+            fi
+
+            if ! command -v jq &> /dev/null; then
+                echo "⚠️  jq not installed. Install jq to view available filters."
+                echo "   Install: brew install jq (macOS) or apt-get install jq (Linux)"
+                return 1
+            fi
+
+            echo "Available log filters:"
+            echo ""
+            jq -r 'to_entries[] | "  \(.key)\n    \(.value.description)"' "$filters_file"
+            ;;
+        test)
+            local tool="$2"
+            if [[ -z "$tool" ]]; then
+                echo "Usage: log-filter test <tool> [logfile]"
+                echo ""
+                echo "Test filtering on a log file. If no logfile specified, uses most recent."
+                echo "Available tools: flutter, npm, docker, vite, wrangler, pytest, gradle"
+                return 1
+            fi
+
+            local logfile="$3"
+            if [[ -z "$logfile" ]]; then
+                # Find most recent log file
+                logfile=$(ls -t "$AUTO_LOGGER_DIR"/*.log 2>/dev/null | head -1)
+                if [[ -z "$logfile" ]]; then
+                    echo "⚠️  No log files found in $AUTO_LOGGER_DIR"
+                    return 1
+                fi
+            fi
+
+            if [[ ! -f "$logfile" ]]; then
+                echo "⚠️  Log file not found: $logfile"
+                return 1
+            fi
+
+            echo "Testing filter: $tool"
+            echo "Input: $logfile"
+            echo ""
+
+            # Temporarily enable filtering for the test
+            local old_filter_enabled=$AUTO_LOGGER_FILTER_ENABLED
+            export AUTO_LOGGER_FILTER_ENABLED=1
+
+            local total_lines=$(wc -l < "$logfile")
+            local filtered_lines=$(cat "$logfile" | _auto_logger_filter_stream "$tool" | wc -l)
+            local removed_lines=$((total_lines - filtered_lines))
+            local percent_removed=$((removed_lines * 100 / total_lines))
+
+            echo "Results:"
+            echo "  Total lines:    $total_lines"
+            echo "  Filtered lines: $filtered_lines"
+            echo "  Removed lines:  $removed_lines ($percent_removed%)"
+            echo ""
+            echo "Preview (first 20 filtered lines):"
+            echo "---"
+            cat "$logfile" | _auto_logger_filter_stream "$tool" | head -20
+
+            # Restore original filter state
+            export AUTO_LOGGER_FILTER_ENABLED=$old_filter_enabled
+            ;;
+        *)
+            echo "Usage: log-filter <command> [options]"
+            echo ""
+            echo "Commands:"
+            echo "  enable              Enable log filtering"
+            echo "  disable             Disable log filtering"
+            echo "  status              Show current filter status"
+            echo "  mode <terminal|both> Set filter mode"
+            echo "  list                List available filters"
+            echo "  test <tool> [file]  Test filter on a log file"
+            echo ""
+            echo "Examples:"
+            echo "  log-filter enable           # Enable filtering"
+            echo "  log-filter mode terminal    # Filter terminal only (default)"
+            echo "  log-filter mode both        # Filter terminal and files"
+            echo "  log-filter list             # Show available filters"
+            echo "  log-filter test flutter     # Test flutter filter on recent log"
+            return 1
+            ;;
+    esac
 }
 
 # Set output format
@@ -393,6 +605,93 @@ _auto_logger_format_output() {
     esac
 }
 
+# Detect tool from command
+_auto_logger_detect_tool() {
+    local cmd="$1"
+    case "$cmd" in
+        flutter*) echo "flutter" ;;
+        npm*|pnpm*|yarn*|npx*) echo "npm" ;;
+        docker*) echo "docker" ;;
+        vite*) echo "vite" ;;
+        wrangler*) echo "wrangler" ;;
+        pytest*|python*) echo "pytest" ;;
+        gradle*|./gradlew*) echo "gradle" ;;
+        *) echo "" ;;
+    esac
+}
+
+# Apply log filtering based on patterns
+_auto_logger_filter_stream() {
+    local tool="$1"
+
+    # If filtering is disabled, just pass through
+    if [[ "$AUTO_LOGGER_FILTER_ENABLED" != "1" ]]; then
+        cat
+        return
+    fi
+
+    # If no tool detected, pass through
+    if [[ -z "$tool" ]]; then
+        cat
+        return
+    fi
+
+    # Get filters file path
+    local filters_file="$AUTO_LOGGER_SCRIPT_DIR/lib/log-filters.json"
+
+    # If filters file doesn't exist or jq not available, pass through
+    if [[ ! -f "$filters_file" ]] || ! command -v jq &> /dev/null; then
+        cat
+        return
+    fi
+
+    # Load filter patterns from JSON
+    local filter_patterns=$(jq -r ".${tool}.filter_patterns[]? // empty" "$filters_file" 2>/dev/null)
+    local keep_patterns=$(jq -r ".${tool}.keep_patterns[]? // empty" "$filters_file" 2>/dev/null)
+
+    # If no patterns found, pass through
+    if [[ -z "$filter_patterns" && -z "$keep_patterns" ]]; then
+        cat
+        return
+    fi
+
+    # Apply filtering line by line
+    while IFS= read -r line; do
+        local should_filter=0
+
+        # Check keep patterns first (highest priority)
+        if [[ -n "$keep_patterns" ]]; then
+            while IFS= read -r pattern; do
+                if echo "$line" | grep -qE "$pattern" 2>/dev/null; then
+                    echo "$line"
+                    should_filter=1
+                    break
+                fi
+            done <<< "$keep_patterns"
+
+            # If matched a keep pattern, skip to next line
+            if [[ $should_filter -eq 1 ]]; then
+                continue
+            fi
+        fi
+
+        # Check filter patterns (should we filter this line?)
+        if [[ -n "$filter_patterns" ]]; then
+            while IFS= read -r pattern; do
+                if echo "$line" | grep -qE "$pattern" 2>/dev/null; then
+                    should_filter=1
+                    break
+                fi
+            done <<< "$filter_patterns"
+        fi
+
+        # If not filtered, output the line
+        if [[ $should_filter -eq 0 ]]; then
+            echo "$line"
+        fi
+    done
+}
+
 # Generic command logger
 _auto_logger_exec() {
     local cmd_name="$1"
@@ -408,24 +707,50 @@ _auto_logger_exec() {
     fi
 
     # Write session header
-    {
-        echo ""
-        echo "=== Log started at $(date '+%Y-%m-%d %H:%M:%S') ==="
-        echo "Command: $full_cmd"
-        echo "---"
-    } >> "$logfile"
-
-    # Execute command with hybrid logging
-    # Raw output goes to file, formatted output goes to terminal
-    if [[ "$AUTO_LOGGER_FORMAT" == "default" ]]; then
-        # Default: simple tee (same as before)
-        command "$cmd_name" "$@" 2>&1 | tee -a "$logfile"
-        local exit_code=${PIPESTATUS[0]}
+    # If append mode is off (default), overwrite the file. If on, append.
+    if [[ "$AUTO_LOGGER_APPEND" == "1" ]]; then
+        {
+            echo ""
+            echo "=== Log started at $(date '+%Y-%m-%d %H:%M:%S') ==="
+            echo "Command: $full_cmd"
+            echo "---"
+        } >> "$logfile"
     else
-        # Hybrid: raw to file, formatted to terminal
-        # Use process substitution to split the stream
-        command "$cmd_name" "$@" 2>&1 | tee -a "$logfile" | _auto_logger_format_output "$AUTO_LOGGER_FORMAT"
-        local exit_code=${PIPESTATUS[0]}
+        {
+            echo ""
+            echo "=== Log started at $(date '+%Y-%m-%d %H:%M:%S') ==="
+            echo "Command: $full_cmd"
+            echo "---"
+        } > "$logfile"
+    fi
+
+    # Detect tool for filtering
+    local detected_tool=$(_auto_logger_detect_tool "$full_cmd")
+
+    # Execute command with filtering support
+    if [[ "$AUTO_LOGGER_FILTER_ENABLED" == "1" && -n "$detected_tool" ]]; then
+        # Filtering is enabled and tool is recognized
+        if [[ "$AUTO_LOGGER_FILTER_MODE" == "both" ]]; then
+            # Mode: both - Filter both terminal and file
+            command "$cmd_name" "$@" 2>&1 | _auto_logger_filter_stream "$detected_tool" | tee -a "$logfile"
+            local exit_code=${PIPESTATUS[0]}
+        else
+            # Mode: terminal (default) - Raw to file, filtered to terminal
+            command "$cmd_name" "$@" 2>&1 | tee -a "$logfile" | _auto_logger_filter_stream "$detected_tool"
+            local exit_code=${PIPESTATUS[0]}
+        fi
+    else
+        # No filtering - use original behavior
+        if [[ "$AUTO_LOGGER_FORMAT" == "default" ]]; then
+            # Default: simple tee (same as before)
+            command "$cmd_name" "$@" 2>&1 | tee -a "$logfile"
+            local exit_code=${PIPESTATUS[0]}
+        else
+            # Hybrid: raw to file, formatted to terminal
+            # Use process substitution to split the stream
+            command "$cmd_name" "$@" 2>&1 | tee -a "$logfile" | _auto_logger_format_output "$AUTO_LOGGER_FORMAT"
+            local exit_code=${PIPESTATUS[0]}
+        fi
     fi
 
     # Write session footer
@@ -657,13 +982,39 @@ log-view() {
 # Clear a specific log or all logs
 log-clear() {
     if [[ $# -eq 0 ]]; then
-        read -p "Clear all logs in $AUTO_LOGGER_DIR? (y/N) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            rm -f "$AUTO_LOGGER_DIR"/*.log
-            echo "✓ All logs cleared"
+        echo "Usage: log-clear <logname|--all>"
+        echo ""
+        echo "Examples:"
+        echo "  log-clear frontend        # Clear specific log"
+        echo "  log-clear --all           # Clear all logs (with confirmation)"
+        echo ""
+        echo "Tip: Use 'log-list' to see available logs"
+        return 1
+    fi
+
+    # Handle --all flag
+    if [[ "$1" == "--all" ]]; then
+        # Count log files
+        local count=$(ls -1 "$AUTO_LOGGER_DIR"/*.log 2>/dev/null | wc -l)
+        if [[ $count -eq 0 ]]; then
+            echo "No log files to clear"
+            return 0
         fi
-    else
+
+        echo "About to clear $count log file(s) in $AUTO_LOGGER_DIR"
+        echo -n "Are you sure? (y/N) "
+        read -r response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            rm -f "$AUTO_LOGGER_DIR"/*.log
+            echo "✓ Cleared $count log file(s)"
+        else
+            echo "Cancelled"
+        fi
+        return 0
+    fi
+
+    # Clear specific log
+    if true; then
         local logfile
         # Check if absolute path provided
         if [[ "$1" = /* ]]; then
@@ -809,6 +1160,17 @@ CORE COMMANDS:
   log-fmt <format>                Set output display format
                                   - default, compact, json, silent, timestamps
 
+  log-append [enable|disable]     Control log append mode
+                                  - disable: Each command overwrites log (default)
+                                  - enable:  Each command appends to log
+
+  log-filter <command>            Smart log filtering (reduces noise)
+                                  - enable:  Enable filtering
+                                  - disable: Disable filtering
+                                  - mode:    Set filter mode (terminal|both)
+                                  - list:    Show available filters
+                                  - test:    Test filter on a log file
+
 BROWSER LOGGING (NEW!):
   log-browser [name]              Launch Chrome with DevTools Protocol logging
                                   - Captures console.log(), network requests, errors
@@ -883,14 +1245,13 @@ CONFIGURATION:
   Override: export AUTO_LOGGER_DIR="/custom/path"
 
 For full documentation, see:
-  https://github.com/naor64/Auto-Logger
+  https://github.com/naorbrig/Auto-Logger
 EOF
 }
 
 # Centralized logging mode control
 log-centralize() {
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-    local cli_tool="$script_dir/bin/auto-logger.js"
+    local cli_tool="$AUTO_LOGGER_SCRIPT_DIR/bin/auto-logger.js"
 
     if [[ -x "$cli_tool" ]] && command -v node &> /dev/null; then
         node "$cli_tool" centralize "$@"

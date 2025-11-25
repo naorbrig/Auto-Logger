@@ -127,9 +127,9 @@ function createConfig() {
   }
 
   const defaultConfig = {
-    centralizedMode: false,
+    centralizedMode: true,  // Enable by default for better organization
     centralDirectory: CENTRAL_LOGS_DIR,
-    version: '1.0.0'
+    version: '1.1.0'
   };
 
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2), 'utf8');

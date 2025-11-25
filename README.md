@@ -1,7 +1,7 @@
 # auto-logger
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/naorbrig/Auto-Logger/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/naorbrig/Auto-Logger/releases)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/naorbrig/Auto-Logger)
 [![Shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-green.svg)](https://github.com/naorbrig/Auto-Logger)
 
@@ -20,6 +20,17 @@ Stop manually copying terminal output and F12 logs! auto-logger automatically sa
   - **Auto**: Smart per-command log files (e.g., `docker build` → `docker-build.log`)
 - **👁️ Live Output**: See command output in terminal AND save to file simultaneously
 
+### Advanced Features (NEW!)
+- **🧹 Smart Log Filtering**: Automatically reduces log noise from Flutter, npm, docker, and more by 40-60%
+  - Filters out system internals, build verbosity, and repetitive messages
+  - Keeps important errors, warnings, and user-facing output
+  - Two modes: filter terminal only (keep raw in file) or filter both
+  - Built-in filters for: Flutter/Android, npm/webpack, docker, vite, wrangler, pytest, gradle
+- **📝 Append Control**: Choose between overwrite (default) or append mode per shell session
+  - Overwrite: Each command clears the log (clean single-run logs)
+  - Append: Commands add to existing log (multi-session debugging)
+  - Per-shell configuration (not global)
+
 ### Browser Logging (NEW!)
 - **🌐 Browser DevTools Capture**: Automatically capture console logs, network requests, and JavaScript errors
 - **🔍 Zero User Interaction**: Launch browser with logging enabled - no extensions or manual setup
@@ -28,15 +39,15 @@ Stop manually copying terminal output and F12 logs! auto-logger automatically sa
 - **🎯 Perfect for Frontend Debugging**: Capture everything from F12 DevTools automatically
 
 ### Organization
-- **📁 Centralized Project Logging**: Optional project-based organization (all logs grouped by project)
+- **📁 Centralized Project Logging**: Enabled by default - all logs automatically organized by project
 - **🗂️ Smart Directory Detection**: Auto-detects `./logs` folders or uses `~/logs`
 - **📊 Project Management**: View all projects and their logs with `log-projects`
 
 ### Platform Support
-- **🌍 Cross-platform**: macOS, Linux, Windows (⚠️ beta - WSL/Git Bash recommended)
+- **🌍 Cross-platform**: macOS, Linux, Windows (PowerShell)
 - **⚡ Zero Config**: Works immediately with sensible defaults
 
-> **Note:** Windows support is currently in beta and has not been fully tested. For Windows users, we recommend using WSL (Windows Subsystem for Linux) or Git Bash for the best experience.
+> **⚠️ WINDOWS WARNING:** Windows/PowerShell support has been implemented but **NOT TESTED** on actual Windows machines. While all features have been ported to PowerShell, there may be untested edge cases. For the most reliable experience on Windows, we recommend using **WSL (Windows Subsystem for Linux)** or **Git Bash**. Please [report any issues](https://github.com/naorbrig/Auto-Logger/issues) you encounter on Windows.
 
 ## Installation
 
@@ -72,13 +83,17 @@ node scripts/install.js
 ### Manual Mode (Single File)
 
 ```bash
-# Enable logging - all commands go to logs/frontend.log
+# Enable logging - all commands go to a single log file
+cd ~/projects/my-app
 log-enable frontend
 
 # Run your commands - everything is logged
 npm run dev
 npm test
 curl localhost:3000
+
+# Logs saved to: ~/auto-logger-logs/my-app/frontend.log
+# (Project name automatically detected from directory)
 
 # Disable logging
 log-disable
@@ -88,17 +103,23 @@ log-disable
 
 ```bash
 # Enable auto-detection mode
+cd ~/projects/my-app
 log-enable auto
 
 # Each command gets its own log file
-npm run dev          # → logs/npm-dev.log
-npm start            # → logs/npm-start.log
-wrangler tail        # → logs/wrangler-tail.log
-python app.py        # → logs/python-app.log
-flutter run          # → logs/flutter-run.log
+npm run dev          # → ~/auto-logger-logs/my-app/npm-dev.log
+npm start            # → ~/auto-logger-logs/my-app/npm-start.log
+wrangler tail        # → ~/auto-logger-logs/my-app/wrangler-tail.log
+python app.py        # → ~/auto-logger-logs/my-app/python-app.log
+flutter run          # → ~/auto-logger-logs/my-app/flutter-run.log
 
 # Disable logging
 log-disable
+
+# View all your projects
+log-projects
+# Projects in ~/auto-logger-logs:
+#   my-app         (5 logs, 12.3 MB, last: 2m ago)
 ```
 
 ### Browser Logging (NEW!)
@@ -138,21 +159,18 @@ log-copy browser-debug-auth-flow
 
 *Note: Firefox and Safari use different protocols and are not supported.*
 
-### Centralized Project Logging (NEW!)
+### Centralized Project Logging (Enabled by Default!)
 
-Organize logs by project instead of scattered across directories:
+Logs are automatically organized by project in `~/auto-logger-logs/{project-name}/`:
 
 ```bash
-# Enable centralized mode (one-time setup)
-log-centralize enable
-
-# Work on frontend project
+# Work on frontend project - logs automatically organized
 cd ~/projects/my-app
 log-enable frontend
 npm run dev
 # → Saves to: ~/auto-logger-logs/my-app/frontend.log
 
-# Switch to backend project
+# Switch to backend project - separate folder automatically created
 cd ~/projects/api-server
 log-enable backend
 python app.py
@@ -173,10 +191,16 @@ log-projects my-app
 ```
 
 **Benefits:**
-- All logs for a project in one place
+- All logs for a project in one place (no more confusion!)
 - Project name auto-detected from directory
 - Easy to find and share project-specific logs
 - Keep personal and work projects separate
+
+**Prefer the old behavior?** Disable centralized mode:
+```bash
+log-centralize disable
+# Now logs save to ~/logs (shared) or ./logs (per-directory)
+```
 
 ## Supported Commands (100+ Tools!)
 
@@ -280,6 +304,30 @@ auto-logger automatically detects and logs **100+ popular CLI tools**. Here are 
 - `log-disable` - Disable logging
 - `log-status` - Show current logging status
 - `log-fmt <format>` - Set output display format
+- `log-append [enable|disable|status]` - Control append vs overwrite mode
+- `log-filter <command>` - Smart log filtering to reduce noise
+
+### Advanced Command Details
+
+**Log Append Control:**
+```bash
+log-append enable   # Commands append to log file
+log-append disable  # Commands overwrite log file (default)
+log-append status   # Show current mode
+```
+
+**Log Filtering:**
+```bash
+log-filter enable          # Enable smart filtering
+log-filter disable         # Disable filtering (show all output)
+log-filter status          # Show current filter status
+log-filter mode terminal   # Filter terminal only, keep raw in file (default)
+log-filter mode both       # Filter both terminal and file
+log-filter list            # Show available filters
+log-filter test <tool>     # Test filter on a log file
+```
+
+Supported filters: `flutter`, `npm`, `docker`, `vite`, `wrangler`, `pytest`, `gradle`
 
 ### Browser Logging Commands (NEW!)
 
@@ -408,6 +456,74 @@ curl https://api.example.com/data
 # Log file has raw JSON for processing
 ```
 
+### Multi-Session Debugging with Append Mode
+
+```bash
+# Enable append mode for multi-run debugging
+log-enable debug-session
+log-append enable
+
+# Run 1: First attempt
+npm test
+# Results saved to logs/debug-session.log
+
+# Run 2: After fixing
+npm test
+# Results APPENDED to logs/debug-session.log
+
+# Run 3: Final check
+npm test
+# All three runs in one log file!
+
+log-view debug-session
+# See complete debugging session history
+```
+
+### Clean Flutter Logs with Smart Filtering
+
+```bash
+# Enable auto logging with filtering
+log-enable auto
+log-filter enable
+
+flutter run
+# Terminal shows:
+# ✓ Built build/app/outputs/flutter-apk/app-debug.apk
+# I/flutter: App started successfully
+# I/flutter: Database initialized
+#
+# Hidden from terminal (but kept in log file):
+# D/SurfaceView: 346 frames of noise
+# D/VRI: 128 drawing updates
+# D/InputMethodManager: 89 keyboard events
+# (44% reduction in terminal noise!)
+
+# Test the filter on existing logs
+log-filter test flutter logs/flutter-run.log
+# Shows how many lines would be filtered
+
+# Switch to filter both terminal AND file
+log-filter mode both
+# Now filtered output goes to file too (for sharing cleaned logs)
+```
+
+### Clean npm Build Logs
+
+```bash
+log-enable auto
+log-filter enable
+
+npm run build
+# Terminal shows:
+# ✓ 234 modules compiled
+# ✓ Built in 3.2s
+#
+# Hidden: webpack module lists, chunk details, etc.
+
+log-copy npm-build
+# Share cleaned log with team
+```
+
 ### Share Logs with AI Assistants
 
 ```bash
@@ -452,14 +568,28 @@ Command: npm run dev
 
 ## Configuration
 
-### Log Directory (Smart Auto-Detection)
+### Log Directory (Automatic Project Organization)
 
-auto-logger **automatically detects** where to save logs:
+**By default (centralized mode enabled)**, auto-logger organizes logs by project:
+
+```bash
+cd ~/projects/my-app
+log-enable frontend
+npm run dev
+# → ~/auto-logger-logs/my-app/frontend.log
+
+cd ~/projects/another-app
+log-enable backend
+python app.py
+# → ~/auto-logger-logs/another-app/backend.log
+```
+
+**If you disable centralized mode** (`log-centralize disable`), logs use smart auto-detection:
 
 1. **If `./logs` exists in current directory** → Use it (per-project logs)
 2. **Otherwise** → Use `~/logs` (global logs)
 
-**Examples:**
+**Examples (with centralized mode disabled):**
 
 ```bash
 # Project A with logs folder
@@ -476,7 +606,7 @@ python app.py           # → ~/logs/backend.log (global)
 
 ### Custom Logs Directory
 
-Override auto-detection by setting `AUTO_LOGGER_DIR`:
+Override all auto-detection by setting `AUTO_LOGGER_DIR`:
 
 ```bash
 # Add to your ~/.bashrc or ~/.zshrc

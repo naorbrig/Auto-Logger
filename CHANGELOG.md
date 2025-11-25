@@ -5,6 +5,81 @@ All notable changes to auto-logger will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-11-24
+
+### Major Features
+
+#### Smart Log Filtering (NEW!)
+- **Automatic Noise Reduction**: Reduces log noise from Flutter, npm, docker, and other verbose tools by 40-60%
+- **Two Filter Modes**:
+  - `terminal` mode (default): Filters terminal output only, keeps raw data in log file
+  - `both` mode: Filters both terminal and log file output
+- **Built-in Filter Presets**:
+  - **Flutter/Android**: Removes system internals (VRI, SurfaceView, InputMethod, etc.) while keeping app logs
+  - **npm/webpack/vite**: Filters module lists, build progress, chunk details
+  - **docker**: Filters layer hashes and download progress
+  - **wrangler**: Filters repetitive GET requests for static assets
+  - **pytest**: Filters verbose test discovery
+  - **gradle**: Filters task execution details
+- **Commands**:
+  - `log-filter enable/disable` - Toggle filtering
+  - `log-filter status` - Show current filter state
+  - `log-filter mode <terminal|both>` - Change filter mode
+  - `log-filter list` - Show available filters
+  - `log-filter test <tool> [file]` - Test filter on existing log file with statistics
+- **Real-World Impact**: Tested on 5,582-line Flutter log, reduced to 3,110 lines (44% noise removed)
+
+#### Log Append Control (NEW!)
+- **Per-Shell Configuration**: Control whether commands overwrite or append to log files
+- **Two Modes**:
+  - Overwrite (default): Each command clears the log file (clean single-run logs)
+  - Append: Each command adds to existing log (multi-session debugging)
+- **Commands**:
+  - `log-append enable` - Commands append to log file
+  - `log-append disable` - Commands overwrite log file (default)
+  - `log-append status` - Show current mode
+- **Use Cases**: Perfect for debugging sessions where you want to compare multiple test runs or track changes across iterations
+
+### Added
+
+- `log-filter` command with enable/disable/status/mode/list/test subcommands
+- `log-append` command with enable/disable/status subcommands
+- Filter configuration file (`lib/log-filters.json`) with 7 pre-configured tool filters
+- Smart filter detection based on command name (auto-detects flutter, npm, docker, etc.)
+- Filter stream processing with pattern matching (filter_patterns and keep_patterns)
+- Append mode state tracking per shell session
+- Updated `log-status` to show both append and filter status
+
+### Changed
+
+- Improved path resolution for sourced scripts using `AUTO_LOGGER_SCRIPT_DIR` global variable
+- Enhanced `_auto_logger_exec` to support filtering in both terminal-only and both modes
+- Updated help text and documentation to include new features
+
+### Fixed
+
+- Fixed `BASH_SOURCE[0]` resolution when script is sourced vs executed
+- Added proper fallback for path resolution using `readlink -f`
+- Fixed version mismatch in auto-logger.sh header (1.0.0 → 1.1.0)
+- Fixed GitHub URL typo in help text
+- Fixed default config inconsistency in centralized-manager.js
+- Fixed HAR export version in browser-logger.js
+
+### PowerShell Parity
+
+> **⚠️ WINDOWS WARNING:** Windows/PowerShell support has been implemented but **NOT TESTED** on actual Windows machines. Please [report any issues](https://github.com/naorbrig/Auto-Logger/issues).
+
+- **Full Feature Parity**: PowerShell now supports all v1.1.0 features matching bash:
+  - `log-append enable/disable/status` - Append mode control
+  - `log-filter enable/disable/status/mode/list/test` - Smart filtering
+  - `log-projects [name] [--clean]` - Project management
+  - `log-run <command>` - Execute command with logging
+- Added filter stream processing with pattern matching
+- Added tool detection for auto-filtering
+- Added JSON filter configuration parsing
+- Updated `log-status` to show append/filter status
+- Fixed `log-clear` to require argument (safety improvement)
+
 ## [1.0.0] - 2025-11-23
 
 ### Major Features
@@ -100,4 +175,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Programming Languages: python, node, deno, go, cargo, flutter, ruby, php
 - Other Dev Tools: make, cmake, gh, nodemon, ts-node, storybook, tailwindcss, sass, protoc, curl, wget
 
+[1.1.0]: https://github.com/naorbrig/Auto-Logger/releases/tag/v1.1.0
 [1.0.0]: https://github.com/naorbrig/Auto-Logger/releases/tag/v1.0.0

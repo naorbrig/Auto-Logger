@@ -1,0 +1,161 @@
+{
+  "flutter": {
+    "description": "Flutter/Android development logs - Filters Android system internals while keeping app logs",
+    "filter_patterns": [
+      "^[DIV]/VRI\\[",
+      "^[DIV]/BLASTBufferQueue",
+      "^[DIV]/SurfaceView",
+      "^[DIV]/SurfaceComposerClient",
+      "^[DIV]/SV\\[",
+      "^[DIV]/InsetsController",
+      "^[DIV]/ImeTracker",
+      "^[DIV]/InputMethodManager",
+      "^[DIV]/InputTransport",
+      "^[DIV]/ImeFocusController",
+      "^[DIV]/InputConnectionAdaptor",
+      "^[DIV]/WindowOnBackDispatcher",
+      "^[DIV]/Configuration",
+      "^[DIV]/AdrenoVK",
+      "^[DIV]/HWUI",
+      "^[DIV]/qdgralloc",
+      "^D/FlutterGeolocator",
+      "^D/FRCPlugin",
+      "^W/FirebaseRemoteConfig.*AbtException",
+      "^W/FirebaseRemoteConfig.*at com\\.google",
+      "^W/FirebaseRemoteConfig.*at java\\.util",
+      "^W/System.*Ignoring header",
+      "^D/ProfileInstaller",
+      "^W/InteractionJankMonitor",
+      "^V/Configuration",
+      "Syncing files to device.*\\d+ms$"
+    ],
+    "keep_patterns": [
+      "^I/flutter",
+      "^W/flutter",
+      "^E/flutter",
+      "IMPORTANT:flutter",
+      "^Launching lib/",
+      "^Running Gradle",
+      "^✓ Built",
+      "^Installing build/",
+      "^Flutter run key commands",
+      "^A Dart VM Service",
+      "^The Flutter DevTools"
+    ]
+  },
+  "npm": {
+    "description": "npm/webpack/vite build logs - Filters module details and build progress",
+    "filter_patterns": [
+      "^\\d+ modules$",
+      "^chunk \\{\\d+\\}",
+      "^\\[\\d+\\] \\./",
+      "^Hash:",
+      "^Version: webpack",
+      "^Built at:",
+      "\\d+% building modules",
+      "^webpack \\d+\\.\\d+\\.\\d+",
+      "^  \\+ \\d+ hidden",
+      "^\\s+\\d+ asset",
+      "orphan modules",
+      "runtime modules"
+    ],
+    "keep_patterns": [
+      "ERROR",
+      "WARNING",
+      "FAIL",
+      "✓",
+      "✔",
+      "Test Suites:",
+      "Tests:",
+      "PASS",
+      "compiled"
+    ]
+  },
+  "docker": {
+    "description": "Docker build/run logs - Filters layer hashes and download progress",
+    "filter_patterns": [
+      "^\\s*--->",
+      "Downloading.*\\[=*>\\s*\\]",
+      "^Digest: sha256:",
+      "^Status: Downloaded newer image",
+      "^\\s+\\w{12}:"
+    ],
+    "keep_patterns": [
+      "ERROR",
+      "Successfully built",
+      "Successfully tagged",
+      "^Step \\d+/\\d+",
+      "COPY",
+      "RUN",
+      "CMD"
+    ]
+  },
+  "vite": {
+    "description": "Vite dev server logs - Filters HMR updates and module resolving",
+    "filter_patterns": [
+      "^\\s+➜",
+      "hmr update",
+      "page reload",
+      "\\d+ modules transformed"
+    ],
+    "keep_patterns": [
+      "ERROR",
+      "warning",
+      "ready in",
+      "Server running at",
+      "build started",
+      "built in"
+    ]
+  },
+  "wrangler": {
+    "description": "Cloudflare Wrangler logs - Filters tail spam while keeping important events",
+    "filter_patterns": [
+      "GET.*→ 200.*favicon",
+      "GET.*→ 200.*\\.js$",
+      "GET.*→ 200.*\\.css$",
+      "GET.*→ 304"
+    ],
+    "keep_patterns": [
+      "ERROR",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "→ 4\\d\\d",
+      "→ 5\\d\\d",
+      "Deployed",
+      "Published"
+    ]
+  },
+  "pytest": {
+    "description": "Python pytest logs - Filters verbose test discovery",
+    "filter_patterns": [
+      "^collecting\\.\\.\\.",
+      "^collected \\d+ item",
+      "^\\s+<Module",
+      "^\\s+<Function"
+    ],
+    "keep_patterns": [
+      "PASSED",
+      "FAILED",
+      "ERROR",
+      "SKIPPED",
+      "=====",
+      "AssertionError"
+    ]
+  },
+  "gradle": {
+    "description": "Gradle build logs - Filters task execution details",
+    "filter_patterns": [
+      "^> Task :",
+      "^BUILD SUCCESSFUL",
+      "^\\d+ actionable task"
+    ],
+    "keep_patterns": [
+      "ERROR",
+      "FAILURE",
+      "deprecated",
+      "warning"
+    ]
+  }
+}
