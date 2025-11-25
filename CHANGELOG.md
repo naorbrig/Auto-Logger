@@ -5,6 +5,22 @@ All notable changes to auto-logger will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-11-25
+
+### Fixed
+
+**Critical Bug Fix: Path Resolution**
+
+- Fixed `AUTO_LOGGER_SCRIPT_DIR` resolution when shell script is copied to `~/.auto-logger/`
+- Shell script now finds npm package directory via `npm root -g` instead of relying on `BASH_SOURCE[0]`
+- This fix resolves "Node.js CLI tool not found" errors for:
+  - `log-centralize status/enable/disable`
+  - `log-filter list`
+  - `log-filter` (actual filtering during command execution)
+  - Centralized mode log directory detection
+
+**Impact:** v1.1.0 users experienced broken v1.1.0 features after `npm install -g`. Upgrading to v1.1.1 fixes all issues.
+
 ## [1.1.0] - 2025-11-24
 
 ### Major Features
@@ -175,5 +191,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Programming Languages: python, node, deno, go, cargo, flutter, ruby, php
 - Other Dev Tools: make, cmake, gh, nodemon, ts-node, storybook, tailwindcss, sass, protoc, curl, wget
 
+[1.1.1]: https://github.com/naorbrig/Auto-Logger/releases/tag/v1.1.1
 [1.1.0]: https://github.com/naorbrig/Auto-Logger/releases/tag/v1.1.0
 [1.0.0]: https://github.com/naorbrig/Auto-Logger/releases/tag/v1.0.0

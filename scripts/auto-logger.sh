@@ -13,24 +13,49 @@ export AUTO_LOGGER_FILTER_MODE="terminal"  # terminal = filter terminal only, bo
 
 # Store script directory for reliable path resolution
 # Handle both sourced and executed contexts
-# IMPORTANT: Don't follow symlinks - we want the actual npm install location
-if [[ -n "${BASH_SOURCE[0]}" ]]; then
-    # Script is being sourced or executed
-    export AUTO_LOGGER_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-else
-    # Fallback if BASH_SOURCE is not set
-    export AUTO_LOGGER_SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-fi
+# Find the npm package directory even when script is copied
+_auto_logger_find_package_dir() {
+    # Method 1: Try to find via npm (works if npm is available)
+    if command -v npm &> /dev/null; then
+        local npm_root=$(npm root -g 2>/dev/null)
+        if [[ -n "$npm_root" && -d "$npm_root/@naorbrig/auto-logger" ]]; then
+            echo "$npm_root/@naorbrig/auto-logger"
+            return 0
+        fi
+    fi
+
+    # Method 2: Check if we're in the actual package directory (not copied)
+    if [[ -n "${BASH_SOURCE[0]}" ]]; then
+        local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)"
+        if [[ -f "$script_dir/package.json" ]] && grep -q '"name": "@naorbrig/auto-logger"' "$script_dir/package.json" 2>/dev/null; then
+            echo "$script_dir"
+            return 0
+        fi
+    fi
+
+    # Method 3: Fallback - return empty (functions will handle gracefully)
+    echo ""
+}
+
+export AUTO_LOGGER_SCRIPT_DIR="$(_auto_logger_find_package_dir)"
 
 # Get log directory using smart resolution
-# Priority: 1) Centralized mode, 2) AUTO_LOGGER_DIR, 3) ./logs, 4) ~/logs
+# Priority: 1) Centralized mode, 2) AUTO_LOGGER_DIR, 3. ./logs, 4) ~/logs
 _auto_logger_get_dir() {
     # Try to use Node.js helper if available
-    local helper="$AUTO_LOGGER_SCRIPT_DIR/bin/get-log-dir.js"
+    if [[ -n "$AUTO_LOGGER_SCRIPT_DIR" ]]; then
+        local helper="$AUTO_LOGGER_SCRIPT_DIR/bin/get-log-dir.js"
+        if [[ -x "$helper" ]] && command -v node &> /dev/null; then
+            local result=$(node "$helper" 2>/dev/null)
+            if [[ -n "$result" ]]; then
+                echo "$result"
+                return 0
+            fi
+        fi
+    fi
 
-    if [[ -x "$helper" ]] && command -v node &> /dev/null; then
-        node "$helper" 2>/dev/null || echo "$HOME/logs"
-    elif [[ -n "$AUTO_LOGGER_DIR" ]]; then
+    # Fallback to manual resolution
+    if [[ -n "$AUTO_LOGGER_DIR" ]]; then
         echo "$AUTO_LOGGER_DIR"
     elif [[ -d "./logs" ]]; then
         echo "./logs"
@@ -428,6 +453,12 @@ log-filter() {
             esac
             ;;
         list)
+            if [[ -z "$AUTO_LOGGER_SCRIPT_DIR" ]]; then
+                echo "⚠️  Cannot find auto-logger package directory"
+                echo "   Please ensure auto-logger is properly installed via npm"
+                return 1
+            fi
+
             local filters_file="$AUTO_LOGGER_SCRIPT_DIR/lib/log-filters.json"
 
             if [[ ! -f "$filters_file" ]]; then
@@ -632,6 +663,12 @@ _auto_logger_filter_stream() {
 
     # If no tool detected, pass through
     if [[ -z "$tool" ]]; then
+        cat
+        return
+    fi
+
+    # If package dir not found, pass through
+    if [[ -z "$AUTO_LOGGER_SCRIPT_DIR" ]]; then
         cat
         return
     fi
@@ -1251,15 +1288,27 @@ EOF
 
 # Centralized logging mode control
 log-centralize() {
-    local cli_tool="$AUTO_LOGGER_SCRIPT_DIR/bin/auto-logger.js"
-
-    if [[ -x "$cli_tool" ]] && command -v node &> /dev/null; then
-        node "$cli_tool" centralize "$@"
-    else
-        echo "Error: Node.js CLI tool not found or Node.js not installed"
+    if [[ -z "$AUTO_LOGGER_SCRIPT_DIR" ]]; then
+        echo "Error: Cannot find auto-logger package directory"
         echo "Please ensure auto-logger is properly installed via npm"
         return 1
     fi
+
+    local cli_tool="$AUTO_LOGGER_SCRIPT_DIR/bin/auto-logger.js"
+
+    if [[ ! -x "$cli_tool" ]]; then
+        echo "Error: Node.js CLI tool not found at: $cli_tool"
+        echo "Please ensure auto-logger is properly installed via npm"
+        return 1
+    fi
+
+    if ! command -v node &> /dev/null; then
+        echo "Error: Node.js not installed"
+        echo "Please install Node.js to use this feature"
+        return 1
+    fi
+
+    node "$cli_tool" centralize "$@"
 }
 
 # Initialize logger on load
